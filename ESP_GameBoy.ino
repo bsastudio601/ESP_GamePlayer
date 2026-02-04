@@ -6,6 +6,7 @@
 #include "BMP280.h"
 #include "SpaceInvaders.h"
 #include "Tetris.h"
+#include "Snake.h"
 
 // ===== Display =====
 #define SCREEN_WIDTH 128
@@ -24,10 +25,11 @@ const char* menuItems[] = {
   "Breakout",
   "hPa & Temp Sensor",
   "Space Invaders",
-  "Tetris"
+  "Tetris",
+  "Snake"
 };
 
-const int menuCount = 4;
+const int menuCount = 5;
 int menuIndex = 0;
 bool inApp = false;
 
@@ -104,6 +106,10 @@ void loop() {
         tetrisInit(&display);
         inApp = true;
       }
+      else if (menuIndex == 4) {     // Snake ✅
+        snakeInit(&display);
+        inApp = true;
+      }
     }
   }
 
@@ -120,6 +126,9 @@ void loop() {
     }
     else if (menuIndex == 3) {
       if (tetrisLoop()) inApp = false;
+    }
+    else if (menuIndex == 4) {
+      if (snakeLoop()) inApp = false;   // ✅
     }
   }
 }
