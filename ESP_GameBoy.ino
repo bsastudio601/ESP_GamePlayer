@@ -7,6 +7,7 @@
 #include "SpaceInvaders.h"
 #include "Tetris.h"
 #include "Snake.h"
+#include "WiFiText.h"
 
 // ===== Display =====
 #define SCREEN_WIDTH 128
@@ -26,11 +27,15 @@ const char* menuItems[] = {
   "hPa & Temp Sensor",
   "Space Invaders",
   "Tetris",
-  "Snake"
+  "Snake",
+  "WiFi Text App"
 };
 
-const int menuCount = 5;
+const int menuCount = 6;
+const int VISIBLE_ITEMS = 5;
+
 int menuIndex = 0;
+int menuOffset = 0;
 bool inApp = false;
 
 // ===== Draw Menu =====
@@ -39,15 +44,19 @@ void drawMenu() {
   display.setTextSize(1);
   display.setTextColor(SH110X_WHITE);
 
+  // Header
   display.setCursor(0, 0);
   display.println("== ESP GameBoy ==");
-
   display.drawLine(0, 10, SCREEN_WIDTH, 10, SH110X_WHITE);
 
-  for (int i = 0; i < menuCount; i++) {
+  // Visible window
+  for (int i = 0; i < VISIBLE_ITEMS; i++) {
+    int itemIndex = menuOffset + i;
+    if (itemIndex >= menuCount) break;
+
     display.setCursor(0, 14 + i * 10);
-    display.print(i == menuIndex ? "> " : "  ");
-    display.println(menuItems[i]);
+    display.print(itemIndex == menuIndex ? "> " : "  ");
+    display.println(menuItems[itemIndex]);
   }
 
   display.display();
@@ -78,36 +87,48 @@ void loop() {
     if (digitalRead(BTN_UP) == LOW) {
       menuIndex--;
       if (menuIndex < 0) menuIndex = menuCount - 1;
-      delay(200);
+
+      if (menuIndex < menuOffset)
+        menuOffset = menuIndex;
+
+      delay(180);
     }
 
     if (digitalRead(BTN_DOWN) == LOW) {
       menuIndex++;
       if (menuIndex >= menuCount) menuIndex = 0;
-      delay(200);
+
+      if (menuIndex >= menuOffset + VISIBLE_ITEMS)
+        menuOffset = menuIndex - VISIBLE_ITEMS + 1;
+
+      delay(180);
     }
 
     if (digitalRead(BTN_SELECT) == LOW) {
       delay(250);
 
-      if (menuIndex == 0) {          // Breakout
+      if (menuIndex == 0) {
         breakoutInit(&display);
         inApp = true;
       }
-      else if (menuIndex == 1) {     // BMP280
+      else if (menuIndex == 1) {
         bmp280Init(&display);
         inApp = true;
       }
-      else if (menuIndex == 2) {     // Space Invaders
+      else if (menuIndex == 2) {
         spaceInvadersInit(&display);
         inApp = true;
       }
-      else if (menuIndex == 3) {     // Tetris
+      else if (menuIndex == 3) {
         tetrisInit(&display);
         inApp = true;
       }
-      else if (menuIndex == 4) {     // Snake ✅
+      else if (menuIndex == 4) {
         snakeInit(&display);
+        inApp = true;
+      }
+      else if (menuIndex == 5) {
+        wifiTextInit(&display);
         inApp = true;
       }
     }
@@ -115,20 +136,11 @@ void loop() {
 
   // ===== APP MODE =====
   else {
-    if (menuIndex == 0) {
-      if (breakoutLoop()) inApp = false;
-    }
-    else if (menuIndex == 1) {
-      if (bmp280Loop()) inApp = false;
-    }
-    else if (menuIndex == 2) {
-      if (spaceInvadersLoop()) inApp = false;
-    }
-    else if (menuIndex == 3) {
-      if (tetrisLoop()) inApp = false;
-    }
-    else if (menuIndex == 4) {
-      if (snakeLoop()) inApp = false;   // ✅
-    }
+    if (menuIndex == 0 && breakoutLoop()) inApp = false;
+    else if (menuIndex == 1 && bmp280Loop()) inApp = false;
+    else if (menuIndex == 2 && spaceInvadersLoop()) inApp = false;
+    else if (menuIndex == 3 && tetrisLoop()) inApp = false;
+    else if (menuIndex == 4 && snakeLoop()) inApp = false;
+    else if (menuIndex == 5 && wifiTextLoop()) inApp = false;
   }
 }
